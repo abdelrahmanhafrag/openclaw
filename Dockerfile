@@ -23,10 +23,6 @@ COPY scripts ./scripts
 
 RUN pnpm install --frozen-lockfile
 
-# Optionally install Chromium and Xvfb for browser automation.
-# Build with: docker build --build-arg OPENCLAW_INSTALL_BROWSER=1 ...
-# Adds ~300MB but eliminates the 60-90s Playwright install on every container start.
-# Must run after pnpm install so playwright-core is available in node_modules.
 ARG OPENCLAW_INSTALL_BROWSER=""
 RUN if [ -n "$OPENCLAW_INSTALL_BROWSER" ]; then \
       apt-get update && \
@@ -38,23 +34,13 @@ RUN if [ -n "$OPENCLAW_INSTALL_BROWSER" ]; then \
 
 COPY . .
 RUN pnpm build
-# Force pnpm for UI build (Bun may fail on ARM/Synology architectures)
 ENV OPENCLAW_PREFER_PNPM=1
 RUN pnpm ui:build
 
 ENV NODE_ENV=production
 
-# Allow non-root user to write temp files during runtime/tests.
 RUN chown -R node:node /app
 
-# Railway: USER node removed to allow writing to Railway-mounted volumes
-# (Railway volumes mount as root regardless of path).
-# Container isolation is handled by Railway infrastructure.
-
-# Start gateway server with default config.
-# Binds to loopback (127.0.0.1) by default for security.
-#
-# For container platforms requiring external health checks:
-#   1. Set OPENCLAW_GATEWAY_TOKEN or OPENCLAW_GATEWAY_PASSWORD env var
-#   2. Override CMD: ["node","openclaw.mjs","gateway","--allow-unconfigured","--bind","lan"]
-CMD ["node", "openclaw.mjs", "gateway", "--allow-unconfigured"]
+# Railway: USER node removed for volume compatibility.
+# Bind to LAN so Railway health checks and routing can reach the gateway.
+CMD ["node", "openclaw.mjs", "gateway", "--allow-unconfigured", "--bind", "lan"]
