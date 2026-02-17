@@ -47,10 +47,9 @@ ENV NODE_ENV=production
 # Allow non-root user to write temp files during runtime/tests.
 RUN chown -R node:node /app
 
-# Security hardening: Run as non-root user
-# The node:22-bookworm image includes a 'node' user (uid 1000)
-# This reduces the attack surface by preventing container escape via root privileges
-USER node
+# Railway: USER node removed to allow writing to Railway-mounted volumes
+# (Railway volumes mount as root regardless of path).
+# Container isolation is handled by Railway infrastructure.
 
 # Start gateway server with default config.
 # Binds to loopback (127.0.0.1) by default for security.
