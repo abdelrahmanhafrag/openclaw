@@ -2,9 +2,6 @@
 builder = "dockerfile"
 
 [deploy]
-healthcheckPath = "/healthz"
-healthcheckTimeout = 300
 restartPolicyType = "on_failure"
 
-# Ensure Railway attaches a persistent volume at /data
 requiredMountPath = "/data"
